@@ -1,14 +1,20 @@
 {
-  "name": "house_project",
+  "name": "me-backend",
   "version": "1.0.0",
-  "description": "",
+  "description": "Backend HOUSE en Render",
   "main": "server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node server.js"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "type": "commonjs"
+  "engines": {
+    "node": "18.x"
+  },
+  "dependencies": {
+    "bcrypt": "^5.1.1",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "nodemailer": "^6.9.15",
+    "sqlite3": "^5.1.7"
+  }
 }
