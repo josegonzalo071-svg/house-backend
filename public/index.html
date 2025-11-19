@@ -1,0 +1,1169 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>HOUSE — Gestor seguro</title>
+  <meta name="description" content="HOUSE — Gestor seguro. Almacenamiento cifrado de imágenes, notas, audios y más. Interfaz minimalista y profesional.">
+
+  <!-- ==========================
+       STYLES — Minimal Premium Dark
+       ========================== -->
+  <style>
+    :root{
+      --bg:#0b0f14;
+      --panel:#0f1419;
+      --muted:#92a1b3;
+      --text:#e6eef8;
+      --accent:#10b981;
+      --glass: rgba(255,255,255,0.02);
+      --card-shadow: 0 8px 30px rgba(2,6,23,0.6);
+      --radius:14px;
+      --max-width:1120px;
+      --gap:12px;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0;padding:0;font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial; background: linear-gradient(180deg,var(--bg), #081018); color:var(--text); -webkit-font-smoothing:antialiased}
+    .app{max-width:var(--max-width);margin:28px auto;padding:18px}
+    header{display:flex;align-items:center;justify-content:space-between;gap:12px}
+    header h1{margin:0;font-weight:600;letter-spacing:0.4px}
+    header .meta{color:var(--muted);font-size:13px}
+
+    .top-row{display:flex;gap:12px;align-items:center}
+    .card{background:linear-gradient(180deg,var(--glass), rgba(0,0,0,0.06));padding:16px;border-radius:var(--radius);box-shadow:var(--card-shadow);margin-bottom:14px}
+
+    /* Tabs / blocks wrapper */
+    .tabs{display:flex;background:transparent;gap:8px;padding:6px;border-radius:10px}
+    .tab{padding:10px 14px;border-radius:10px;cursor:pointer;color:var(--muted);background:transparent;border:1px solid rgba(255,255,255,0.02)}
+    .tab.active{background:linear-gradient(90deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01));color:var(--text);border-color:rgba(255,255,255,0.04);font-weight:600}
+
+    /* Forms */
+    input,textarea,select,button{font:inherit}
+    input,textarea{width:100%;padding:12px;border-radius:10px;border:1px solid rgba(255,255,255,0.03);background:transparent;color:var(--text);outline:none}
+    input:focus,textarea:focus{box-shadow:0 6px 20px rgba(16,185,129,0.06);border-color:rgba(16,185,129,0.18)}
+    .row{display:flex;gap:8px;flex-wrap:wrap}
+    button{cursor:pointer;background:linear-gradient(90deg,var(--accent),#0ea5e9);color:#042; border:none;padding:10px 14px;border-radius:10px}
+    button.ghost{background:transparent;border:1px solid rgba(255,255,255,0.04);color:var(--muted)}
+
+    .small{color:var(--muted);font-size:13px}
+    .hidden{display:none}
+
+    /* Grid and lists */
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    table{width:100%;border-collapse:collapse}
+    table th,table td{padding:10px;text-align:left;border-bottom:1px dashed rgba(255,255,255,0.03)}
+
+    /* Thumbnails */
+    .thumb-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px}
+    .thumb-grid img{width:100%;height:100px;object-fit:cover;border-radius:10px;display:block}
+
+    /* Footer */
+    .footer{color:var(--muted);font-size:13px;text-align:center;margin-top:18px}
+
+    /* Responsive tweaks */
+    @media (max-width:900px){
+      .grid{grid-template-columns:1fr}
+      .app{padding:12px;margin:12px}
+      header{flex-direction:column;align-items:flex-start}
+    }
+
+    /* utilities */
+    .muted{color:var(--muted)}
+    .badge{background:rgba(255,255,255,0.02);padding:6px 8px;border-radius:999px;font-size:13px}
+    .input-with-icon{position:relative}
+    .input-with-icon input{padding-left:40px}
+    .input-with-icon .icon{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--muted)}
+
+    /* blocksWrap compatibility: keep original layout behavior */
+    #blocksWrap { display:flex; gap:14px; flex-wrap:wrap; margin-bottom:12px; }
+    #createBlock, #loginBlock { flex:1; min-width:320px; }
+    @media (max-width:720px){ #blocksWrap { flex-direction:column; } }
+
+    /* small animation */
+    .fade-in { animation: fadeIn .22s ease both; }
+    @keyframes fadeIn { from { opacity:0; transform: translateY(6px);} to { opacity:1; transform:none;} }
+
+    /* visual helpers for action buttons inside lists */
+    .btn-small { padding:6px 8px; border-radius:8px; font-size:13px; }
+    .bad{ background:#ef4444 !important; color:#fff; border:none; }
+
+  </style>
+  <!-- END STYLES -->
+
+  <!-- Small accessibility + meta -->
+  <meta name="theme-color" content="#10b981">
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div>
+        <h1>HOUSE</h1>
+        <div class="meta">Gestor seguro — tu bóveda privada</div>
+      </div>
+      <div class="top-row">
+        <div id="hdr" class="small">No conectado</div>
+      </div>
+    </header>
+
+    <!-- NOTE: ambos bloques visibles por defecto (no forzamos registro) -->
+    <div id="blocksWrap" class="fade-in">
+      <!-- CREATE BLOCK (visual unchanged) -->
+      <div id="createBlock" class="card">
+        <h3>Crear cuenta</h3>
+        <div class="row" style="margin-top:8px">
+          <input id="newUser" placeholder="Usuario" />
+          <input id="newEmail" placeholder="Correo" />
+          <input id="newPass" type="password" placeholder="Contraseña" />
+          <button id="btnCreate">Crear</button>
+        </div>
+        <div class="small" style="margin-top:8px">También puedes iniciar sesión si ya tienes una cuenta.</div>
+      </div>
+
+      <!-- LOGIN BLOCK (visual unchanged) -->
+      <div id="loginBlock" class="card">
+        <h3>Iniciar sesión</h3>
+        <div class="row" style="margin-top:8px">
+          <input id="loginUser" placeholder="Usuario" />
+          <input id="loginPass" type="password" placeholder="Contraseña" />
+          <button id="btnLogin">Entrar</button>
+          <button id="btnForgot" style="background:#ef4444">Olvidé contraseña</button>
+        </div>
+      </div>
+    </div>
+
+        <!-- ========================= -->
+    <!--  SESSION BLOCK (cuando ya inició sesión) -->
+    <!-- ========================= -->
+    <div id="sessionBlock" class="card hidden fade-in">
+      <div class="row" style="justify-content:space-between">
+        <div><strong>Usuario:</strong> <span id="who"></span></div>
+        <div class="row">
+          <button id="btnManualBackup">Descargar respaldo (cifrado)</button>
+          <button id="btnLogout" style="background:#ef4444">Cerrar sesión</button>
+          <button id="btnDelete" style="background:#8b5cf6">Eliminar cuenta (local)</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========================= -->
+    <!--  MENU CARD (botonera principal) -->
+    <!-- ========================= -->
+    <div id="menuCard" class="card hidden fade-in">
+      <div class="row">
+        <button class="navBtn" data-view="viewImages">📷 Imágenes</button>
+        <button class="navBtn" data-view="viewVideos">🎥 Videos</button>
+        <button class="navBtn" data-view="viewAudios">🎵 Audios</button>
+        <button class="navBtn" data-view="viewCreds">🔐 Credenciales</button>
+        <button class="navBtn" data-view="viewLinks">🔗 Links</button>
+        <button class="navBtn" data-view="viewMessages">💬 Mensajes</button>
+        <button class="navBtn" data-view="viewNotes">📝 Block de notas</button>
+        <button class="navBtn" data-view="viewReset">🔑 Restablecer contraseña</button>
+      </div>
+    </div>
+
+
+    <!-- ========================= -->
+    <!--  MAIN CONTENT (todas las vistas) -->
+    <!-- ========================= -->
+    <main>
+
+      <!-- ========================= -->
+      <!--  IMÁGENES -->
+      <!-- ========================= -->
+      <section id="viewImages" class="card hidden fade-in">
+        <h2>Imágenes</h2>
+        <input id="imgFile" type="file" accept="image/*" />
+        <input id="imgName" placeholder="Nombre (opcional)" />
+        <button id="btnSaveImg">Subir imagen</button>
+        <div id="imagesList" style="margin-top:12px"></div>
+      </section>
+
+      <!-- ========================= -->
+      <!--  VIDEOS -->
+      <!-- ========================= -->
+      <section id="viewVideos" class="card hidden fade-in">
+        <h2>Videos</h2>
+        <input id="vidFile" type="file" accept="video/*" />
+        <input id="vidName" placeholder="Nombre (opcional)" />
+        <button id="btnSaveVid">Subir video</button>
+        <div id="videosList" style="margin-top:12px"></div>
+      </section>
+
+      <!-- ========================= -->
+      <!--  AUDIOS -->
+      <!-- ========================= -->
+      <section id="viewAudios" class="card hidden fade-in">
+        <h2>Audios</h2>
+        <input id="audFile" type="file" accept="audio/*" />
+        <input id="audName" placeholder="Nombre (opcional)" />
+        <button id="btnSaveAud">Subir audio</button>
+        <div id="audiosList" style="margin-top:12px"></div>
+      </section>
+
+      <!-- ========================= -->
+      <!--  CREDENCIALES -->
+      <!-- ========================= -->
+      <section id="viewCreds" class="card hidden fade-in">
+        <h2>Credenciales</h2>
+
+        <div class="row">
+          <input id="credName" placeholder="Nombre del sitio / servicio" />
+          <input id="credEmail" placeholder="Email" />
+        </div>
+
+        <div class="row" style="margin-top:8px">
+          <input id="credPass" placeholder="Contraseña" />
+          <input id="credPhone" placeholder="Teléfono (opcional)" />
+        </div>
+
+        <div style="margin-top:8px">
+          <button id="btnSaveCred">Guardar credencial</button>
+        </div>
+
+        <h3 style="margin-top:12px">Lista</h3>
+
+        <div style="margin-top:8px" class="row">
+          <input id="searchCred" placeholder="Buscar credenciales..." />
+          <button id="clearSearchCred" class="ghost">Limpiar</button>
+        </div>
+
+        <table id="credTable" style="margin-top:8px">
+          <thead>
+            <tr>
+              <th>Nombre</th>
+              <th>Email</th>
+              <th>Pass</th>
+              <th>Tel</th>
+              <th>Creado</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </section>
+
+      <!-- ========================= -->
+      <!--  LINKS -->
+      <!-- ========================= -->
+      <section id="viewLinks" class="card hidden fade-in">
+        <h2>Links</h2>
+
+        <div class="row">
+          <input id="linkName" placeholder="Nombre" />
+          <input id="linkUrl" placeholder="https://ejemplo.com" />
+        </div>
+
+        <div style="margin-top:8px">
+          <button id="btnSaveLink">Guardar link</button>
+        </div>
+
+        <div id="linksList" style="margin-top:12px"></div>
+      </section>
+
+      <!-- ========================= -->
+      <!--  MENSAJES -->
+      <!-- ========================= -->
+      <section id="viewMessages" class="card hidden fade-in">
+        <h2>Mensajes</h2>
+        <input id="msgName" placeholder="Nombre del mensaje" />
+        <textarea id="msgText" rows="4" placeholder="Texto del mensaje"></textarea>
+
+        <div style="margin-top:8px">
+          <button id="btnSaveMsg">Guardar mensaje</button>
+        </div>
+
+        <div id="msgsList" style="margin-top:12px"></div>
+      </section>
+
+      <!-- ========================= -->
+      <!--  BLOCK DE NOTAS -->
+      <!-- ========================= -->
+      <section id="viewNotes" class="card hidden fade-in">
+        <h2>Block de notas</h2>
+
+        <div class="row" style="margin-bottom:8px">
+          <input id="searchNote" placeholder="Buscar notas por nombre..." />
+          <button id="clearSearchNote" class="ghost">Limpiar</button>
+        </div>
+
+        <input id="noteTitle" placeholder="Nombre de la nota"/>
+        <textarea id="noteText" rows="8" placeholder="Escribe tu nota aquí"></textarea>
+
+        <div style="margin-top:8px" class="row">
+          <button id="btnSaveNote">Guardar</button>
+          <button id="btnNewNote" class="ghost">Nueva</button>
+        </div>
+
+        <div id="notesList" class="grid" style="margin-top:12px"></div>
+        <h3 style="margin-top:12px">Tabla de notas (vista tipo Excel)</h3>
+        <table id="notesTable" style="margin-top:8px">
+          <thead>
+            <tr>
+              <th>Nombre</th>
+              <th>Avance</th>
+              <th>Creado</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </section>
+
+      <!-- ========================= -->
+      <!--  RESTABLECER CONTRASEÑA -->
+      <!-- ========================= -->
+      <section id="viewReset" class="card hidden fade-in">
+        <h2>Restablecer contraseña</h2>
+        <div class="small">Ingresa tu usuario o correo y se enviará un token al correo registrado.</div>
+
+        <div style="margin-top:8px" class="row">
+          <input id="forgotUserOrEmail" placeholder="Usuario o correo" />
+          <button id="btnSendForgot" style="background:#f59e0b">Enviar token</button>
+        </div>
+
+        <div style="margin-top:12px">
+          <input id="resetUser" placeholder="Usuario" />
+          <input id="resetToken" placeholder="Token recibido" />
+          <input id="resetNewPass" type="password" placeholder="Nueva contraseña" />
+
+          <div style="margin-top:8px">
+            <button id="btnResetConfirm" style="background:#10b981">Restablecer</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ========================= -->
+      <!--  IMPORTAR RESPALDO CIFRADO -->
+      <!-- ========================= -->
+      <section class="card fade-in">
+        <h3>Importar respaldo cifrado (.enc.json)</h3>
+        <div class="small">Importa un respaldo cifrado generado por otro dispositivo.</div>
+        <input id="fileImport" type="file" accept=".json,.enc.json" />
+      </section>
+
+    </main>
+
+    <div class="footer">HOUSE — Mantén los backups cifrados y guárdalos fuera del navegador.</div>
+  </div>
+<script>
+// ====================================================================================
+//  SISTEMA HOUSE — SCRIPT COMPLETO, ORIGINAL, FUNCIONAL + FIX DE INICIO SIN REGISTRO
+// ====================================================================================
+
+// API base del backend
+const API_BASE = window.location.origin;
+
+// Sesión local
+let session = { user:null, email:null, password:null };
+
+
+// ====================================================================================
+//  UTILIDADES DE CIFRADO Y FORMATOS
+// ====================================================================================
+
+function bytesToHex(bytes){ return Array.from(new Uint8Array(bytes)).map(b=>b.toString(16).padStart(2,'0')).join(''); }
+function hexToBytes(hex){ const b=new Uint8Array(hex.length/2); for(let i=0;i<b.length;i++) b[i]=parseInt(hex.substr(i*2,2),16); return b; }
+function arrayBufferToBase64(buf){ let bin=''; const bytes=new Uint8Array(buf); const chunk=8192; for(let i=0;i<bytes.length;i+=chunk) bin+=String.fromCharCode.apply(null, bytes.subarray(i,i+chunk)); return btoa(bin); }
+function base64ToArrayBuffer(b64){ const bin=atob(b64); const len=bin.length; const bytes=new Uint8Array(len); for(let i=0;i<len;i++) bytes[i]=bin.charCodeAt(i); return bytes.buffer; }
+function randHex(len=12){ const a=new Uint8Array(len); crypto.getRandomValues(a); return bytesToHex(a); }
+
+async function deriveKey(passwordWithEmail, saltHex, iterations=150000){
+  const enc=new TextEncoder();
+  const salt = hexToBytes(saltHex);
+  const base = await crypto.subtle.importKey('raw', enc.encode(passwordWithEmail), 'PBKDF2', false, ['deriveKey']);
+  return crypto.subtle.deriveKey({ name:'PBKDF2', salt, iterations, hash:'SHA-256'}, base, { name:'AES-GCM', length:256 }, false, ['encrypt','decrypt']);
+}
+
+async function encryptPayload(key, plainObj){
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const data = new TextEncoder().encode(JSON.stringify(plainObj));
+  const ct = await crypto.subtle.encrypt({ name:'AES-GCM', iv }, key, data);
+  return { iv: bytesToHex(iv), ct: arrayBufferToBase64(ct) };
+}
+
+async function decryptPayload(key, ivHex, ctB64){
+  const iv = hexToBytes(ivHex);
+  const ct = base64ToArrayBuffer(ctB64);
+  const plain = await crypto.subtle.decrypt({ name:'AES-GCM', iv }, key, ct);
+  return JSON.parse(new TextDecoder().decode(plain));
+}
+
+function downloadBlob(blob, filename){ const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=filename; a.click(); URL.revokeObjectURL(a.href); }
+function downloadJSON(obj, filename){ const b=new Blob([JSON.stringify(obj)], {type:'application/json'}); downloadBlob(b, filename); }
+function escapeHtml(s){ return (s||'').toString().replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;'); }
+function fileToDataURL(file){ return new Promise((res,rej)=>{ const r=new FileReader(); r.onload=()=>res(r.result); r.onerror=e=>rej(e); r.readAsDataURL(file); }); }
+
+
+// ====================================================================================
+//  APP INIT
+// ====================================================================================
+
+document.addEventListener('DOMContentLoaded', async () => {
+
+  const hdr = document.getElementById('hdr');
+  const createBlock = document.getElementById('createBlock');
+  const loginBlock  = document.getElementById('loginBlock');
+  const sessionBlock = document.getElementById('sessionBlock');
+  const menuCard = document.getElementById('menuCard');
+  const fileImport = document.getElementById('fileImport');
+
+  // ================================================
+  // FIX IMPORTANTE:
+  // Ahora al cargar la página NO se oculta el LOGIN.
+  // Ambos bloques aparecen siempre.
+  // ================================================
+  createBlock.classList.remove('hidden');
+  loginBlock.classList.remove('hidden');
+
+  // ====================================================================================
+  //  REGISTRO
+  // ====================================================================================
+  document.getElementById('btnCreate').onclick = async () => {
+
+    const username = document.getElementById('newUser').value.trim();
+    const email    = document.getElementById('newEmail').value.trim().toLowerCase();
+    const pass     = document.getElementById('newPass').value;
+
+    if(!username || !email || !pass)
+      return alert('Completa usuario, correo y contraseña');
+
+    try{
+      const res = await fetch(API_BASE + '/api/register',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ username, email, password: pass })
+      });
+
+      const j = await res.json();
+      if(!res.ok) return alert("Error: " + (j.error || JSON.stringify(j)));
+
+      alert("Cuenta creada. Ahora inicia sesión.");
+      document.getElementById('loginUser').value = username;
+
+    }catch(err){
+      alert("Error creando cuenta: " + err);
+    }
+  };
+
+
+  // ====================================================================================
+  //  LOGIN (Sin registro obligatorio, ya funciona normal)
+  // ====================================================================================
+  document.getElementById('btnLogin').onclick = async () => {
+
+    const username = document.getElementById('loginUser').value.trim();
+    const pass     = document.getElementById('loginPass').value;
+
+    if(!username || !pass) return alert("Usuario y contraseña requeridos");
+
+    try{
+      const res = await fetch(API_BASE + '/api/login',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ username, password: pass })
+      });
+
+      const j = await res.json();
+      if(!res.ok) return alert("Error: " + (j.error || JSON.stringify(j)));
+
+      // Guardar sesión
+      session.user = j.username;
+      session.email = j.email;
+      session.password = pass;
+
+      hdr.textContent = "Usuario: " + session.user;
+      document.getElementById('who').textContent = session.user;
+
+      // Ocultar login y registro, mostrar menú
+      createBlock.classList.add('hidden');
+      loginBlock.classList.add('hidden');
+      sessionBlock.classList.remove('hidden');
+      menuCard.classList.remove('hidden');
+
+      showView("viewImages");
+      await refreshAll();
+      await autoBackupAndDownload();
+
+    }catch(err){
+      alert("Error en login: " + err);
+    }
+  };
+
+
+  // ====================================================================================
+  //  LOGOUT
+  // ====================================================================================
+  document.getElementById('btnLogout').onclick = () => {
+
+    if(!confirm("¿Cerrar sesión?")) return;
+
+    session = { user:null, email:null, password:null };
+
+    hdr.textContent = "No conectado";
+    sessionBlock.classList.add('hidden');
+    menuCard.classList.add('hidden');
+
+    // Volver a mostrar ambos bloques
+    createBlock.classList.remove('hidden');
+    loginBlock.classList.remove('hidden');
+  };
+
+
+  // ====================================================================================
+  //  OLVIDÉ CONTRASEÑA / RECUPERACIÓN
+  // ====================================================================================
+
+  document.getElementById('btnForgot').onclick = () => {
+    showView('viewReset');
+  };
+
+  document.getElementById('btnSendForgot').onclick = async () => {
+
+    const u = document.getElementById('forgotUserOrEmail').value.trim();
+    if(!u) return alert("Usuario o correo requerido");
+
+    try{
+      const res = await fetch(API_BASE + '/api/forgot',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ usernameOrEmail:u })
+      });
+
+      const j = await res.json();
+      if(!res.ok) return alert("Error: "+(j.error||JSON.stringify(j)));
+
+      alert("Token enviado. Revisa tu correo.");
+      showView("viewReset");
+
+    }catch(err){
+      alert("Error enviando token: " + err);
+    }
+  };
+
+  document.getElementById('btnResetConfirm').onclick = async () => {
+
+    const username = document.getElementById('resetUser').value.trim();
+    const token    = document.getElementById('resetToken').value.trim();
+    const newPass  = document.getElementById('resetNewPass').value;
+
+    if(!username || !token || !newPass)
+      return alert("Completa usuario, token y nueva contraseña.");
+
+    try{
+      const res = await fetch(API_BASE + '/api/reset',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ username, token, newPassword:newPass })
+      });
+
+      const j = await res.json();
+      if(!res.ok) return alert("Error: "+(j.error||JSON.stringify(j)));
+
+      alert("Contraseña restablecida.");
+      showView("viewImages");
+
+    }catch(err){
+      alert("Error restableciendo contraseña: " + err);
+    }
+  };
+
+
+  // ====================================================================================
+  //  NAVEGACIÓN ENTRE VISTAS
+  // ====================================================================================
+  document.querySelectorAll('.navBtn').forEach(b=>{
+    b.addEventListener('click', async e=>{
+      showView(e.currentTarget.dataset.view);
+      await refreshAll();
+    });
+  });
+
+  function showView(id){
+    document.querySelectorAll("main section").forEach(s=>s.classList.add("hidden"));
+    const el = document.getElementById(id);
+    if(el) el.classList.remove("hidden");
+  }
+
+
+  // ====================================================================================
+  //  SUBIR ELEMENTOS (imagenes, videos, audios…)
+  // ====================================================================================
+  async function postItem(obj){
+    const res = await fetch(API_BASE+"/api/item",{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(obj)
+    });
+    return res.json();
+  }
+
+  // === Imágenes ===
+  document.getElementById('btnSaveImg').onclick = async()=>{
+
+    if(!session.user) return alert("Inicia sesión");
+
+    const f = document.getElementById('imgFile').files[0];
+    if(!f) return alert("Selecciona una imagen");
+
+    const name = (document.getElementById('imgName').value || f.name).trim();
+    const data = await fileToDataURL(f);
+
+    await postItem({ owner:session.user, type:'image', name, data, mime:f.type });
+
+    document.getElementById('imgFile').value='';
+    document.getElementById('imgName').value='';
+
+    refreshAll();
+  };
+
+  // === Videos ===
+  document.getElementById('btnSaveVid').onclick = async()=>{
+
+    if(!session.user) return alert("Inicia sesión");
+
+    const f = document.getElementById('vidFile').files[0];
+    if(!f) return alert("Selecciona un video");
+
+    const name = (document.getElementById('vidName').value || f.name).trim();
+    const data = await fileToDataURL(f);
+
+    await postItem({ owner:session.user, type:'video', name, data, mime:f.type });
+
+    document.getElementById('vidFile').value='';
+    document.getElementById('vidName').value='';
+
+    refreshAll();
+  };
+
+  // === Audios ===
+  document.getElementById('btnSaveAud').onclick = async()=>{
+
+    if(!session.user) return alert("Inicia sesión");
+
+    const f = document.getElementById('audFile').files[0];
+    if(!f) return alert("Selecciona un audio");
+
+    const name = (document.getElementById('audName').value || f.name).trim();
+    const data = await fileToDataURL(f);
+
+    await postItem({ owner:session.user, type:'audio', name, data, mime:f.type });
+
+    document.getElementById('audFile').value='';
+    document.getElementById('audName').value='';
+
+    refreshAll();
+  };
+
+
+  // ====================================================================================
+  //  CREDENCIALES
+  // ====================================================================================
+  document.getElementById('btnSaveCred').onclick = async()=>{
+
+    if(!session.user) return alert("Inicia sesión");
+
+    const name  = document.getElementById('credName').value.trim();
+    const email = document.getElementById('credEmail').value.trim();
+    const pass  = document.getElementById('credPass').value;
+    const phone = document.getElementById('credPhone').value.trim();
+
+    if(!name) return alert("Nombre requerido");
+
+    await postItem({ owner: session.user, type:'credential', name, email, pass, phone, created: Date.now() });
+
+    document.getElementById('credName').value='';
+    document.getElementById('credEmail').value='';
+    document.getElementById('credPass').value='';
+    document.getElementById('credPhone').value='';
+
+    refreshAll();
+  };
+
+
+  // ====================================================================================
+  //  LINKS
+  // ====================================================================================
+  document.getElementById('btnSaveLink').onclick = async()=>{
+
+    if(!session.user) return alert("Inicia sesión");
+
+    const name = document.getElementById('linkName').value.trim();
+    const url  = document.getElementById('linkUrl').value.trim();
+
+    if(!name || !url) return alert("Nombre y URL requeridos");
+
+    await postItem({ owner:session.user, type:'link', name, url, created:Date.now() });
+
+    document.getElementById('linkName').value='';
+    document.getElementById('linkUrl').value='';
+
+    refreshAll();
+  };
+
+
+  // ====================================================================================
+  //  MENSAJES
+  // ====================================================================================
+  document.getElementById('btnSaveMsg').onclick = async()=>{
+
+    if(!session.user) return alert("Inicia sesión");
+
+    const name = document.getElementById('msgName').value.trim();
+    const text = document.getElementById('msgText').value;
+
+    if(!name || !text) return alert("Nombre y texto requeridos");
+
+    await postItem({ owner:session.user, type:'message', name, text, created:Date.now() });
+
+    document.getElementById('msgName').value='';
+    document.getElementById('msgText').value='';
+
+    refreshAll();
+  };
+
+
+  // ====================================================================================
+  //  NOTAS
+  // ====================================================================================
+  document.getElementById('btnSaveNote').onclick = async()=>{
+
+    if(!session.user) return alert("Inicia sesión");
+
+    const name = (document.getElementById('noteTitle').value || ("nota-"+Date.now())).trim();
+    const text = document.getElementById('noteText').value;
+
+    await postItem({ owner:session.user, type:'note', name, text, created:Date.now() });
+
+    document.getElementById('noteTitle').value='';
+    document.getElementById('noteText').value='';
+
+    refreshAll();
+  };
+
+  document.getElementById('btnNewNote').onclick = ()=>{
+    document.getElementById('noteTitle').value='';
+    document.getElementById('noteText').value='';
+    window.scrollTo(0,0);
+  };
+
+
+  // ====================================================================================
+  //  IMPORTAR RESPALDO CIFRADO
+  // ====================================================================================
+  fileImport.onchange = async e =>{
+
+    const f = e.target.files[0];
+    if(!f) return;
+
+    const txt = await f.text();
+
+    try{
+      const obj = JSON.parse(txt);
+
+      if(!obj.salt || !obj.iv || !obj.ct)
+        return alert("Archivo inválido");
+
+      const pwd = prompt("Contraseña usada para cifrar el respaldo:");
+      if(pwd === null) return;
+
+      const emailFromFile = obj.meta?.email || prompt("Correo con que se cifró el respaldo:");
+
+      const key = await deriveKey(pwd + "|" + emailFromFile, obj.salt);
+      const payload = await decryptPayload(key, obj.iv, obj.ct);
+
+      if(!session.user){
+        alert("Primero inicia sesión para importar.");
+        return;
+      }
+
+      for(const it of payload.items){
+        const copy = {...it};
+        delete copy.id;
+        copy.owner = session.user;
+        await postItem(copy);
+      }
+
+      alert("Respaldo importado.");
+      refreshAll();
+
+    }catch(err){
+      alert("Error importando: "+err);
+    }
+
+    e.target.value='';
+  };
+
+
+  // ====================================================================================
+  //  REFRESCAR VISTAS (cargar todos los items)
+  // ====================================================================================
+  async function refreshAll(){
+
+    if(!session.user) return;
+
+    try{
+      const res  = await fetch(API_BASE+"/api/items/"+encodeURIComponent(session.user));
+      const all  = await res.json();
+
+
+      // ===============================
+      // IMAGENES
+      // ===============================
+      const images = all.filter(i=>i.type==='image');
+      const imagesList = document.getElementById("imagesList");
+      imagesList.innerHTML='';
+
+      for(const it of images){
+
+        // Traemos el detalle con el base64 real
+        const detail = await (await fetch(API_BASE + '/api/item/' + it.id)).json();
+
+        const div = document.createElement('div');
+        div.className = 'card';
+        div.style.marginBottom='8px';
+
+        const thumb = `<img class="thumb" src="${detail.data}" style="max-width:140px;max-height:100px;border-radius:8px;">`;
+
+        div.innerHTML = `
+          <div style="display:flex;gap:10px;align-items:center">
+            ${thumb}
+            <div style="flex:1">
+              <b>${escapeHtml(detail.name)}</b>
+              <div class="small">${new Date(detail.created_at).toLocaleString()}</div>
+              <div class="row" style="margin-top:6px">
+                <button class="open">Ver</button>
+                <button class="dl">Descargar</button>
+                <button class="del" style="background:#ef4444">Eliminar</button>
+              </div>
+            </div>
+          </div>
+        `;
+
+        div.querySelector('.open').onclick = ()=>showPreviewById(it.id);
+        div.querySelector('.dl').onclick   = ()=>{
+          const a = document.createElement('a');
+          a.href = detail.data;
+          a.download = detail.name || 'imagen';
+          a.click();
+        };
+        div.querySelector('.del').onclick  = async()=>{
+          if(!confirm("¿Eliminar imagen?")) return;
+          await deleteItem(it.id);
+          refreshAll();
+        };
+
+        imagesList.appendChild(div);
+      }
+
+
+      // ===============================
+      // VIDEOS
+      // ===============================
+      const videos = all.filter(i=>i.type==='video');
+      const videosList = document.getElementById("videosList");
+      videosList.innerHTML='';
+
+      for(const it of videos){
+
+        const div = document.createElement('div');
+        div.className='card';
+        div.style.marginBottom='8px';
+
+        div.innerHTML = `
+          <div><b>${escapeHtml(it.name)}</b></div>
+          <div class="small">${new Date(it.created_at).toLocaleString()}</div>
+          <video controls style="max-width:100%;margin-top:6px;">
+            <source src="${(await (await fetch(API_BASE+'/api/item/'+it.id)).json()).data}">
+          </video>
+          <div class="row" style="margin-top:6px">
+            <button class="dl">Abrir</button>
+            <button class="del" style="background:#ef4444">Eliminar</button>
+          </div>
+        `;
+
+        div.querySelector('.dl').onclick = ()=>window.open(API_BASE+'/api/item/'+it.id);
+        div.querySelector('.del').onclick = async()=>{
+          if(!confirm("¿Eliminar video?")) return;
+          await deleteItem(it.id);
+          refreshAll();
+        };
+
+        videosList.appendChild(div);
+      }
+
+
+      // ===============================
+      // AUDIOS
+      // ===============================
+      const audios = all.filter(i=>i.type==='audio');
+      const audiosList = document.getElementById("audiosList");
+      audiosList.innerHTML='';
+
+      for(const it of audios){
+        const div = document.createElement('div');
+        div.className='card';
+        div.style.marginBottom='8px';
+
+        div.innerHTML = `
+          <div><b>${escapeHtml(it.name)}</b></div>
+          <div class="small">${new Date(it.created_at).toLocaleString()}</div>
+          <audio controls style="margin-top:6px" src="${(await (await fetch(API_BASE+'/api/item/'+it.id)).json()).data}"></audio>
+          <div class="row" style="margin-top:6px">
+            <button class="dl">Abrir</button>
+            <button class="del" style="background:#ef4444">Eliminar</button>
+          </div>
+        `;
+
+        div.querySelector('.dl').onclick = ()=>window.open(API_BASE+'/api/item/'+it.id);
+        div.querySelector('.del').onclick = async()=>{
+          if(!confirm("¿Eliminar audio?")) return;
+          await deleteItem(it.id);
+          refreshAll();
+        };
+
+        audiosList.appendChild(div);
+      }
+
+
+      // ===============================
+      // CREDENCIALES
+      // ===============================
+      const qCred = document.getElementById('searchCred').value.trim().toLowerCase();
+      const creds = all.filter(i=>i.type==='credential')
+                       .filter(c => !qCred || (c.name||'').toLowerCase().includes(qCred));
+
+      const tbody = document.querySelector('#credTable tbody');
+      tbody.innerHTML='';
+
+      for(const it of creds){
+        const detail = await (await fetch(API_BASE+'/api/item/'+it.id)).json();
+
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${escapeHtml(detail.name)}</td>
+          <td>${escapeHtml(detail.email)}</td>
+          <td>${escapeHtml(detail.pass)}</td>
+          <td>${escapeHtml(detail.phone||"")}</td>
+          <td>${new Date(detail.created_at).toLocaleString()}</td>
+          <td><button class="del" style="background:#ef4444">Eliminar</button></td>
+        `;
+
+        tr.querySelector('.del').onclick = async()=>{
+          if(!confirm("¿Eliminar credencial?")) return;
+          await deleteItem(it.id);
+          refreshAll();
+        };
+
+        tbody.appendChild(tr);
+      }
+
+
+      // ===============================
+      // LINKS
+      // ===============================
+      const links = all.filter(i=>i.type==='link');
+      const linksList = document.getElementById("linksList");
+      linksList.innerHTML='';
+
+      for(const it of links){
+        const detail = await (await fetch(API_BASE+'/api/item/'+it.id)).json();
+
+        const div = document.createElement('div');
+        div.className='card';
+        div.style.marginBottom='8px';
+
+        div.innerHTML = `
+          <b>${escapeHtml(detail.name)}</b>
+          <div class="small">${new Date(detail.created_at).toLocaleString()}</div>
+          <div class="small">${escapeHtml(detail.url)}</div>
+          <div class="row" style="margin-top:6px">
+            <a href="${escapeHtml(detail.url)}" target="_blank">
+              <button>Abrir</button>
+            </a>
+            <button class="del" style="background:#ef4444">Eliminar</button>
+          </div>
+        `;
+
+        div.querySelector('.del').onclick = async()=>{
+          if(!confirm("¿Eliminar link?")) return;
+          await deleteItem(it.id);
+          refreshAll();
+        };
+
+        linksList.appendChild(div);
+      }
+
+
+      // ===============================
+      // MENSAJES
+      // ===============================
+      const msgs = all.filter(i=>i.type==='message');
+      const msgsList = document.getElementById("msgsList");
+      msgsList.innerHTML='';
+
+      for(const it of msgs){
+        const detail = await (await fetch(API_BASE+'/api/item/'+it.id)).json();
+
+        const div = document.createElement('div');
+        div.className='card';
+        div.style.marginBottom='8px';
+
+        div.innerHTML = `
+          <b>${escapeHtml(detail.name)}</b>
+          <div class="small">${new Date(detail.created_at).toLocaleString()}</div>
+          <div class="small">${escapeHtml(detail.text)}</div>
+          <div class="row" style="margin-top:6px">
+            <button class="del" style="background:#ef4444">Eliminar</button>
+          </div>
+        `;
+
+        div.querySelector('.del').onclick = async()=>{
+          if(!confirm("¿Eliminar mensaje?")) return;
+          await deleteItem(it.id);
+          refreshAll();
+        };
+
+        msgsList.appendChild(div);
+      }
+
+
+      // ===============================
+      // NOTAS
+      // ===============================
+      const qNote = document.getElementById('searchNote').value.trim().toLowerCase();
+      const notes = all.filter(i=>i.type==='note')
+                       .filter(n => !qNote || (n.name||'').toLowerCase().includes(qNote));
+
+      const notesList = document.getElementById("notesList");
+      notesList.innerHTML='';
+
+      for(const it of notes){
+        const detail = await (await fetch(API_BASE+'/api/item/'+it.id)).json();
+
+        const div = document.createElement('div');
+        div.className='card';
+        div.style.marginBottom='8px';
+
+        div.innerHTML = `
+          <b>${escapeHtml(detail.name)}</b>
+          <div class="small">${new Date(detail.created_at).toLocaleString()}</div>
+          <div class="small">${escapeHtml((detail.text||"").slice(0,300))}...</div>
+          <div class="row" style="margin-top:6px">
+            <button class="open">Abrir</button>
+            <button class="del" style="background:#ef4444">Eliminar</button>
+          </div>
+        `;
+
+        div.querySelector('.open').onclick = ()=>{
+          document.getElementById('noteTitle').value = detail.name;
+          document.getElementById('noteText').value  = detail.text;
+          window.scrollTo(0,0);
+        };
+
+        div.querySelector('.del').onclick = async()=>{
+          if(!confirm("¿Eliminar nota?")) return;
+          await deleteItem(it.id);
+          refreshAll();
+        };
+
+        notesList.appendChild(div);
+      }
+
+    }catch(err){
+      console.error("refreshAll error:", err);
+    }
+  }
+
+
+  
+      // ===============================
+      // TABLA DE NOTAS (tipo Excel)
+      // ===============================
+      const notesTableBody = document.querySelector('#notesTable tbody');
+      if (notesTableBody) {
+        notesTableBody.innerHTML = '';
+        for (const it of notes) {
+          const detail = await (await fetch(API_BASE + '/api/item/' + it.id)).json();
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td>${escapeHtml(detail.name)}</td>
+            <td>${escapeHtml((detail.text||'').slice(0,60))}</td>
+            <td>${new Date(detail.created_at).toLocaleString()}</td>
+          `;
+          notesTableBody.appendChild(tr);
+        }
+      }
+// ====================================================================================
+  //  PREVISUALIZACIÓN DE ARCHIVOS
+  // ====================================================================================
+  async function showPreviewById(id){
+
+    try{
+      const res = await fetch(API_BASE+'/api/item/'+id);
+      const it  = await res.json();
+
+      const win = window.open("", "_blank");
+
+      if(it.type === 'image'){
+        win.document.write(`<img src="${it.data}" style="max-width:100%">`);
+      }
+      else if(it.type === 'video'){
+        win.document.write(`<video controls src="${it.data}" style="width:100%">`);
+      }
+      else if(it.type === 'audio'){
+        win.document.write(`<audio controls src="${it.data}">`);
+      }
+      else{
+        win.document.write("<pre>"+escapeHtml(JSON.stringify(it,null,2))+"</pre>");
+      }
+
+    }catch(err){
+      alert("Error preview: "+err);
+    }
+  }
+
+
+  // ====================================================================================
+  //  ELIMINAR ELEMENTO
+  // ====================================================================================
+  async function deleteItem(id){
+    const res = await fetch(API_BASE+'/api/item/'+id, { method:'DELETE' });
+    const j = await res.json();
+    if(!res.ok) alert("Error eliminando: "+(j.error||JSON.stringify(j)));
+    return true;
+  }
+
+
+  // ====================================================================================
+  //  BACKUP AUTOMÁTICO EN LOGIN
+  // ====================================================================================
+  async function autoBackupAndDownload(){
+
+    if(!session.user) return;
+
+    const r = await fetch(API_BASE+'/api/export/'+encodeURIComponent(session.user));
+    const payload = await r.json();
+
+    payload.meta.email = session.email || null;
+
+    const salt = randHex(12);
+    const key = await deriveKey(session.password + "|" + (session.email||""), salt);
+    const enc = await encryptPayload(key, payload);
+
+    const wrapper = {
+      meta: {
+        user: session.user,
+        email: session.email,
+        created: new Date().toISOString()
+      },
+      salt,
+      iv: enc.iv,
+      ct: enc.ct
+    };
+
+    downloadJSON(wrapper, `house_backup_${session.user}.enc.json`);
+
+    return wrapper;
+  }
+
+}); // DOMContentLoaded
+</script>
